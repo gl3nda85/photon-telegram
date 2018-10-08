@@ -1,5 +1,3 @@
--*- coding: utf-8 -*-
-
 import json
 import codecs
 import requests
@@ -10,7 +8,7 @@ from telegram.ext.dispatcher import run_async
 from telegram.ext import Updater
 from html import escape
 
-updater = Updater(token='BOT_TOKEN')
+updater = Updater(token='552813283:AAGP7a0o5rvtXS-2u3OXnScuxjmp1bx8vG4')
 dispatcher = updater.dispatcher
 
 import logging
@@ -19,7 +17,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 def commands(bot, update):
 	user = update.message.from_user.username 
-	bot.send_message(chat_id=update.message.chat_id, text="Initiating commands /tip & /withdraw have a specfic format,\n use them like so:" + "\n \n Parameters: \n <user> = target user to tip \n <amount> = amount of reddcoin to utilise \n <address> = reddcoin address to withdraw to \n \n Tipping format: \n /tip <user> <amount> \n \n Withdrawing format: \n /withdraw <address> <amount>")
+	bot.send_message(chat_id=update.message.chat_id, text="Initiating commands /tip & /withdraw have a specfic format,\n use them like so:" + "\n \n Parameters: \n <user> = target user to tip \n <amount> = amount of Photon to utilise \n <address> = Photon address to withdraw to \n \n Tipping format: \n /tip <user> <amount> \n \n Withdrawing format: \n /withdraw <address> <amount>")
 
 def help(bot, update):
 	bot.send_message(chat_id=update.message.chat_id, text="The following commands are at your disposal: /hi , /commands , /deposit , /tip , /withdraw , /price , /marketcap or /balance")
@@ -29,7 +27,7 @@ def deposit(bot, update):
 	if user is None:
 		bot.send_message(chat_id=update.message.chat_id, text="Please set a telegram username in your profile settings!")
 	else:
-		address = "/usr/local/bin/reddcoind"
+		address = "/home/dolaned/Desktop/photond"
 		result = subprocess.run([address,"getaccountaddress",user],stdout=subprocess.PIPE)
 		clean = (result.stdout.strip()).decode("utf-8")
 		bot.send_message(chat_id=update.message.chat_id, text="@{0} your depositing address is: {1}".format(user,clean))
@@ -42,13 +40,13 @@ def tip(bot,update):
 	if user is None:
 		bot.send_message(chat_id=update.message.chat_id, text="Please set a telegram username in your profile settings!")
 	else:
-		machine = "@Reddcoin_bot"
+		machine = "@Photon_bot"
 		if target == machine:
 			bot.send_message(chat_id=update.message.chat_id, text="HODL.")
 		elif "@" in target:
 			target = target[1:]
 			user = update.message.from_user.username 
-			core = "/usr/local/bin/reddcoind"
+			core = "/home/dolaned/Desktop/photond"
 			result = subprocess.run([core,"getbalance",user],stdout=subprocess.PIPE)
 			balance = float((result.stdout.strip()).decode("utf-8"))
 			amount = float(amount)
@@ -65,7 +63,7 @@ def tip(bot,update):
 			bot.send_message(chat_id=update.message.chat_id, text="Error that user is not applicable.")
 
 def balance(bot,update):
-	quote_page = requests.get('https://www.worldcoinindex.com/coin/reddcoin')
+	quote_page = requests.get('https://www.worldcoinindex.com/coin/photon')
 	strainer = SoupStrainer('div', attrs={'class': 'row mob-coin-table'})
 	soup = BeautifulSoup(quote_page.content, 'html.parser', parse_only=strainer)
 	name_box = soup.find('div', attrs={'class':'col-md-6 col-xs-6 coinprice'})
@@ -77,7 +75,7 @@ def balance(bot,update):
 	if user is None:
 		bot.send_message(chat_id=update.message.chat_id, text="Please set a telegram username in your profile settings!")
 	else:
-		core = "/usr/local/bin/reddcoind"
+		core = "/home/dolaned/Desktop/photond"
 		result = subprocess.run([core,"getbalance",user],stdout=subprocess.PIPE)
 		clean = (result.stdout.strip()).decode("utf-8")
 		balance  = float(clean)
@@ -87,7 +85,7 @@ def balance(bot,update):
 		bot.send_message(chat_id=update.message.chat_id, text="@{0} your current balance is: {1} RDD ≈  ${2}".format(user,balance,fiat_balance))
 
 def price(bot,update):
-	quote_page = requests.get('https://www.worldcoinindex.com/coin/reddcoin')
+	quote_page = requests.get('https://www.worldcoinindex.com/coin/photon')
 	strainer = SoupStrainer('div', attrs={'class': 'row mob-coin-table'})
 	soup = BeautifulSoup(quote_page.content, 'html.parser', parse_only=strainer)
 	name_box = soup.find('div', attrs={'class':'col-md-6 col-xs-6 coinprice'})
@@ -96,11 +94,11 @@ def price(bot,update):
 	fiat = soup.find('span', attrs={'class': ''})
 	kkz = fiat.text.replace("\n","")
 	percent = re.sub(r'\n\s*\n', r'\n\n', kkz.strip(), flags=re.M)
-	quote_page = requests.get('https://bittrex.com/api/v1.1/public/getticker?market=btc-rdd')
+	quote_page = requests.get('https://bittrex.com/api/v1.1/public/getticker?market=ltc-pho')
 	soup = BeautifulSoup(quote_page.content, 'html.parser').text
 	btc = soup[80:]
 	sats = btc[:-2]
-	bot.send_message(chat_id=update.message.chat_id, text="Reddcoin is valued at {0} Δ {1} ≈ {2}".format(price,percent,sats) + " ฿")
+	bot.send_message(chat_id=update.message.chat_id, text="Photon is valued at {0} Δ {1} ≈ {2}".format(price,percent,sats) + " ฿")
 
 def withdraw(bot,update):
 	user = update.message.from_user.username
@@ -112,7 +110,7 @@ def withdraw(bot,update):
 		address = ''.join(str(e) for e in address)
 		target = target.replace(target[:35], '')
 		amount = float(target)
-		core = "/usr/local/bin/reddcoind"
+		core = "/home/dolaned/Desktop/photond"
 		result = subprocess.run([core,"getbalance",user],stdout=subprocess.PIPE)
 		clean = (result.stdout.strip()).decode("utf-8")
 		balance = float(clean)
@@ -131,13 +129,13 @@ def moon(bot,update):
   bot.send_message(chat_id=update.message.chat_id, text="Moon mission inbound!")
 
 def marketcap(bot,update):
-	quote_page = requests.get('https://www.worldcoinindex.com/coin/reddcoin')
+	quote_page = requests.get('https://www.worldcoinindex.com/coin/photon')
 	strainer = SoupStrainer('div', attrs={'class': 'row mob-coin-table'})
 	soup = BeautifulSoup(quote_page.content, 'html.parser', parse_only=strainer)
 	name_box = soup.find('div', attrs={'class':'col-md-6 col-xs-6 coin-marketcap'})
 	name = name_box.text.replace("\n","")
 	mc = re.sub(r'\n\s*\n', r'\n\n', name.strip(), flags=re.M)
-	bot.send_message(chat_id=update.message.chat_id, text="The current market cap of Reddcoin is valued at {0}".format(mc))
+	bot.send_message(chat_id=update.message.chat_id, text="The current market cap of Photon is valued at {0}".format(mc))
 
 from telegram.ext import CommandHandler
 
