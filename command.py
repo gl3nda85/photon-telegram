@@ -58,7 +58,7 @@ def tip(bot,update):
 				balance = str(balance)
 				amount = str(amount) 
 				tx = subprocess.run([core,"move",user,target,amount],stdout=subprocess.PIPE)
-				bot.send_message(chat_id=update.message.chat_id, text="@{0} tipped @{1} of {2} RDD".format(user, target, amount))
+				bot.send_message(chat_id=update.message.chat_id, text="@{0} tipped @{1} of {2} PHO".format(user, target, amount))
 		else: 
 			bot.send_message(chat_id=update.message.chat_id, text="Error that user is not applicable.")
 
@@ -82,7 +82,7 @@ def balance(bot,update):
 		fiat_balance = balance * price
 		fiat_balance = str(round(fiat_balance,3))
 		balance =  str(round(balance,3))
-		bot.send_message(chat_id=update.message.chat_id, text="@{0} your current balance is: {1} RDD ≈  ${2}".format(user,balance,fiat_balance))
+		bot.send_message(chat_id=update.message.chat_id, text="@{0} your current balance is: {1} PHO ≈  ${2}".format(user,balance,fiat_balance))
 
 def price(bot,update):
 	quote_page = requests.get('https://www.worldcoinindex.com/coin/photon')
@@ -119,7 +119,7 @@ def withdraw(bot,update):
 		else:
 			amount = str(amount)
 			tx = subprocess.run([core,"sendfrom",user,address,amount],stdout=subprocess.PIPE)
-			bot.send_message(chat_id=update.message.chat_id, text="@{0} has successfully withdrew to address: {1} of {2} RDD" .format(user,address,amount))
+			bot.send_message(chat_id=update.message.chat_id, text="@{0} has successfully withdrew to address: {1} of {2} PHO" .format(user,address,amount))
 
 def hi(bot,update):
 	user = update.message.from_user.username
