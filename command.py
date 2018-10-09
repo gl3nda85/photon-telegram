@@ -46,6 +46,7 @@ def tip(bot,update):
 		machine = "@PhotonTipBot"	
 		if "@" in target:
 			target = target[1:]
+			print(target)
 			user = update.message.from_user.username
 			result  = rpc_connection.getbalance(user)
 			balance = float(result)
@@ -57,7 +58,7 @@ def tip(bot,update):
 			elif target == user:
 				bot.send_message(chat_id=update.message.chat_id, text="You can't tip yourself silly.")
 			else:
-				if target == machine or testMachine:
+				if target == machine or target == testMachine:
 					tx = rpc_connection.sendfrom(user, conf.contribution_address, amount)
 					bot.send_message(chat_id=update.message.chat_id, text="Thanks for contributing to the tip bot!")
 				else:	
