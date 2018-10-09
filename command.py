@@ -7,8 +7,12 @@ import subprocess
 from telegram.ext.dispatcher import run_async
 from telegram.ext import Updater
 from html import escape
+from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
+import conf
 
-updater = Updater(token='552813283:AAGP7a0o5rvtXS-2u3OXnScuxjmp1bx8vG4')
+rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:8984"%(conf.rpc_username, conf.rpc_password))
+
+updater = Updater(token=conf.bot_token)
 dispatcher = updater.dispatcher
 
 import logging
@@ -27,10 +31,8 @@ def deposit(bot, update):
 	if user is None:
 		bot.send_message(chat_id=update.message.chat_id, text="Please set a telegram username in your profile settings!")
 	else:
-		address = "/home/dolaned/Desktop/photond"
-		result = subprocess.run([address,"getaccountaddress",user],stdout=subprocess.PIPE)
-		clean = (result.stdout.strip()).decode("utf-8")
-		bot.send_message(chat_id=update.message.chat_id, text="@{0} your depositing address is: {1}".format(user,clean))
+		result = rpc_connection.getaccountaddress(user)
+		bot.send_message(chat_id=update.message.chat_id, text="@{0} your depositing address is: {1}".format(user,result))
 
 def tip(bot,update):
 	user = update.message.from_user.username
@@ -40,65 +42,60 @@ def tip(bot,update):
 	if user is None:
 		bot.send_message(chat_id=update.message.chat_id, text="Please set a telegram username in your profile settings!")
 	else:
-		machine = "@Photon_bot"
-		if target == machine:
-			bot.send_message(chat_id=update.message.chat_id, text="HODL.")
-		elif "@" in target:
+		testMachine = '@photontestbot'
+		machine = "@PhotonTipBot"	
+		if "@" in target:
 			target = target[1:]
-			user = update.message.from_user.username 
-			core = "/home/dolaned/Desktop/photond"
-			result = subprocess.run([core,"getbalance",user],stdout=subprocess.PIPE)
-			balance = float((result.stdout.strip()).decode("utf-8"))
+			user = update.message.from_user.username
+			result  = rpc_connection.getbalance(user)
+			balance = float(result)
 			amount = float(amount)
 			if balance < amount:
 				bot.send_message(chat_id=update.message.chat_id, text="@{0} you have insufficent funds.".format(user))
+			elif amount <= 0:
+				bot.send_message(chat_id=update.message.chat_id, text="@{0} please use a value greater than 0".format(user))
 			elif target == user:
 				bot.send_message(chat_id=update.message.chat_id, text="You can't tip yourself silly.")
 			else:
-				balance = str(balance)
-				amount = str(amount) 
-				tx = subprocess.run([core,"move",user,target,amount],stdout=subprocess.PIPE)
-				bot.send_message(chat_id=update.message.chat_id, text="@{0} tipped @{1} of {2} PHO".format(user, target, amount))
+				if target == machine or testMachine:
+					tx = rpc_connection.sendfrom(user, conf.contribution_address, amount)
+					bot.send_message(chat_id=update.message.chat_id, text="Thanks for contributing to the tip bot!")
+				else:	
+					tx = rpc_connection.move(user, target, amount)
+					balance = str(balance)
+					amount = str(amount)
+					bot.send_message(chat_id=update.message.chat_id, text="@{0} tipped @{1} of {2} PHO".format(user, target, amount))
 		else: 
-			bot.send_message(chat_id=update.message.chat_id, text="Error that user is not applicable.")
+			bot.send_message(chat_id=update.message.chat_id, text="Error that user is not applicable. please make sure you tag the user with @")
 
 def balance(bot,update):
-	quote_page = requests.get('https://www.worldcoinindex.com/coin/photon')
-	strainer = SoupStrainer('div', attrs={'class': 'row mob-coin-table'})
-	soup = BeautifulSoup(quote_page.content, 'html.parser', parse_only=strainer)
-	name_box = soup.find('div', attrs={'class':'col-md-6 col-xs-6 coinprice'})
-	name = name_box.text.replace("\n","")
-	price = re.sub(r'\n\s*\n', r'\n\n', name.strip(), flags=re.M)
-	price = re.sub("[^0-9^.]", "", price)
-	price = float(price)
+	quote_page = requests.get('https://api.coinmarketcap.com/v2/ticker/175/?convert=ltc')
+	jsonResult = quote_page.json()
+	data = jsonResult['data']
+	ltcPrice = float(data['quotes']['LTC']['price'])
+	usdPrice = float(data['quotes']['USD']['price'])
 	user = update.message.from_user.username
 	if user is None:
 		bot.send_message(chat_id=update.message.chat_id, text="Please set a telegram username in your profile settings!")
 	else:
-		core = "/home/dolaned/Desktop/photond"
-		result = subprocess.run([core,"getbalance",user],stdout=subprocess.PIPE)
-		clean = (result.stdout.strip()).decode("utf-8")
+		result  = rpc_connection.getbalance(user)
+		clean = float(result)
 		balance  = float(clean)
-		fiat_balance = balance * price
+		fiat_balance = balance * usdPrice
 		fiat_balance = str(round(fiat_balance,3))
+		ltc_balance = balance * ltcPrice
+		ltc_balance = str(round(ltc_balance,3))
 		balance =  str(round(balance,3))
-		bot.send_message(chat_id=update.message.chat_id, text="@{0} your current balance is: {1} PHO ≈  ${2}".format(user,balance,fiat_balance))
+		bot.send_message(chat_id=update.message.chat_id, text="@{0} your current balance is: {1} PHO ≈  ${2} or {3} LTC".format(user,balance,fiat_balance, ltc_balance))
 
 def price(bot,update):
-	quote_page = requests.get('https://www.worldcoinindex.com/coin/photon')
-	strainer = SoupStrainer('div', attrs={'class': 'row mob-coin-table'})
-	soup = BeautifulSoup(quote_page.content, 'html.parser', parse_only=strainer)
-	name_box = soup.find('div', attrs={'class':'col-md-6 col-xs-6 coinprice'})
-	name = name_box.text.replace("\n","")
-	price = re.sub(r'\n\s*\n', r'\n\n', name.strip(), flags=re.M)
-	fiat = soup.find('span', attrs={'class': ''})
-	kkz = fiat.text.replace("\n","")
-	percent = re.sub(r'\n\s*\n', r'\n\n', kkz.strip(), flags=re.M)
-	quote_page = requests.get('https://bittrex.com/api/v1.1/public/getticker?market=ltc-pho')
-	soup = BeautifulSoup(quote_page.content, 'html.parser').text
-	btc = soup[80:]
-	sats = btc[:-2]
-	bot.send_message(chat_id=update.message.chat_id, text="Photon is valued at {0} Δ {1} ≈ {2}".format(price,percent,sats) + " ฿")
+	quote_page = requests.get('https://api.coinmarketcap.com/v2/ticker/175/?convert=ltc')
+	jsonResult = quote_page.json()
+	data = jsonResult['data']
+	ltcPriceChange = data['quotes']['LTC']['percent_change_1h']
+	ltcPrice = float(data['quotes']['LTC']['price'])
+	usdPrice = float(data['quotes']['USD']['price'])
+	bot.send_message(chat_id=update.message.chat_id, text="Photon is valued at {0} LTC and {1} USD Δ %{2}".format(ltcPrice, usdPrice, ltcPriceChange))
 
 def withdraw(bot,update):
 	user = update.message.from_user.username
@@ -110,15 +107,14 @@ def withdraw(bot,update):
 		address = ''.join(str(e) for e in address)
 		target = target.replace(target[:35], '')
 		amount = float(target)
-		core = "/home/dolaned/Desktop/photond"
-		result = subprocess.run([core,"getbalance",user],stdout=subprocess.PIPE)
-		clean = (result.stdout.strip()).decode("utf-8")
+		result  = rpc_connection.getbalance(user)
+		clean = float(result)
 		balance = float(clean)
 		if balance < amount:
 			bot.send_message(chat_id=update.message.chat_id, text="@{0} you have insufficent funds.".format(user))
 		else:
+			tx = rpc_connection.sendfrom(user, address, amount)
 			amount = str(amount)
-			tx = subprocess.run([core,"sendfrom",user,address,amount],stdout=subprocess.PIPE)
 			bot.send_message(chat_id=update.message.chat_id, text="@{0} has successfully withdrew to address: {1} of {2} PHO" .format(user,address,amount))
 
 def hi(bot,update):
@@ -129,13 +125,24 @@ def moon(bot,update):
   bot.send_message(chat_id=update.message.chat_id, text="Moon mission inbound!")
 
 def marketcap(bot,update):
-	quote_page = requests.get('https://www.worldcoinindex.com/coin/photon')
-	strainer = SoupStrainer('div', attrs={'class': 'row mob-coin-table'})
-	soup = BeautifulSoup(quote_page.content, 'html.parser', parse_only=strainer)
-	name_box = soup.find('div', attrs={'class':'col-md-6 col-xs-6 coin-marketcap'})
-	name = name_box.text.replace("\n","")
-	mc = re.sub(r'\n\s*\n', r'\n\n', name.strip(), flags=re.M)
-	bot.send_message(chat_id=update.message.chat_id, text="The current market cap of Photon is valued at {0}".format(mc))
+	quote_page = requests.get('https://api.coinmarketcap.com/v2/ticker/175/?convert=ltc')
+	jsonResult = quote_page.json()
+	data = jsonResult['data']
+
+	ltcMarketCap = data['quotes']['LTC']['market_cap']
+	usdMarketCap = data['quotes']['USD']['market_cap']
+	bot.send_message(chat_id=update.message.chat_id, text="The current market cap of Photon is valued at {0} LTC and ${1} USD" .format(ltcMarketCap, usdMarketCap))
+
+
+def contribute(bot, update):
+	   bot.send_message(chat_id=update.message.chat_id, text='Thanks for your interest in contributing!\n\n'
+                                                          'This project is run as a labour of love, but if you would like to help '
+                                                          'cover my almost nonexistent server costs or buy me a coffee feel free to tip the bot:\n\n'
+                                                          '/tip @PhotonTipBot <amount> \n\n'
+                                                          'or contribute directly to:\n\n'
+                                                          '{0} \n\n'
+                                                          'Thanks for using the Photon Tipbot!'.format(conf.contribution_address))
+
 
 from telegram.ext import CommandHandler
 
@@ -163,11 +170,14 @@ dispatcher.add_handler(price_handler)
 tip_handler = CommandHandler('tip', tip)
 dispatcher.add_handler(tip_handler)
 
-balance_handler = CommandHandler('balance', balance)
+balance_handler = CommandHandler('bal', balance)
 dispatcher.add_handler(balance_handler)
 
 help_handler = CommandHandler('help', help)
 dispatcher.add_handler(help_handler)
+
+contribute_handler = CommandHandler('contribute', contribute)
+dispatcher.add_handler(contribute_handler)
 
 updater.start_polling()
 

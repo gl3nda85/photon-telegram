@@ -1,0 +1,6 @@
+rpc_username='photonrpc'
+rpc_password='ExbRmUTg7gmeKLbekF1QRJX2vSFLB2NpbSq59J7BLffi'
+
+bot_token='612544676:AAHvScOCOhv7NDamynsCmIXoObGvZZoAZfQ'
+
+contribution_address= 'BpBnRnJTceJCCDq8G9mSoEwVypHUBCRw92'
