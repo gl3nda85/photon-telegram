@@ -24,7 +24,7 @@ def commands(bot, update):
 	bot.send_message(chat_id=update.message.chat_id, text="Initiating commands /tip & /withdraw have a specfic format,\n use them like so:" + "\n \n Parameters: \n <user> = target user to tip \n <amount> = amount of Photon to utilise \n <address> = Photon address to withdraw to \n \n Tipping format: \n /tip <user> <amount> \n \n Withdrawing format: \n /withdraw <address> <amount>")
 
 def help(bot, update):
-	bot.send_message(chat_id=update.message.chat_id, text="The following commands are at your disposal: /hi , /commands , /deposit , /tip , /withdraw , /price , /marketcap or /balance")
+	bot.send_message(chat_id=update.message.chat_id, text="The following commands are at your disposal: /hi , /commands , /deposit , /tip , /withdraw , /price , /contribute , /marketcap or /bal")
 
 def deposit(bot, update):
 	user = update.message.from_user.username
@@ -42,8 +42,7 @@ def tip(bot,update):
 	if user is None:
 		bot.send_message(chat_id=update.message.chat_id, text="Please set a telegram username in your profile settings!")
 	else:
-		testMachine = '@photontestbot'
-		machine = "@PhotonTipBot"	
+	
 		if "@" in target:
 			target = target[1:]
 			print(target)
@@ -58,6 +57,8 @@ def tip(bot,update):
 			elif target == user:
 				bot.send_message(chat_id=update.message.chat_id, text="You can't tip yourself silly.")
 			else:
+				testMachine = 'photontestbot'
+				machine = "PhotonTipBot"
 				if target == machine or target == testMachine:
 					tx = rpc_connection.sendfrom(user, conf.contribution_address, amount)
 					bot.send_message(chat_id=update.message.chat_id, text="Thanks for contributing to the tip bot!")
