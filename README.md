@@ -9,6 +9,7 @@
 *  `apt-get install python3-pip`
 *  `pip3 install beautifulsoup4`
 *  `pip3 install python-telegram-bot --upgrade`
+*  `pip3 install python-bitcoinrpc `
 
 * In order to run the tip-bot effectively, a Bitcoin-core based client is needed. For this git Photon-core is used , but any major alternate crypto-currency client could easily be incorperated. 
 
