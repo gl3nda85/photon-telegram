@@ -24,7 +24,7 @@ def commands(bot, update):
 	bot.send_message(chat_id=update.message.chat_id, text="Initiating commands /tip & /withdraw have a specfic format,\n use them like so:" + "\n \n Parameters: \n <user> = target user to tip \n <amount> = amount of Photon to utilise \n <address> = Photon address to withdraw to \n \n Tipping format: \n /tip <user> <amount> \n \n Withdrawing format: \n /withdraw <address> <amount>")
 
 def help(bot, update):
-	bot.send_message(chat_id=update.message.chat_id, text="The following commands are at your disposal: /hi , /commands , /deposit , /tip , /withdraw , /price , /contribute , /marketcap or /bal")
+	bot.send_message(chat_id=update.message.chat_id, text="The following commands are at your disposal: /hi , /commands , /deposit , /tip , /withdraw , /price , /expbal,  /contribute , /marketcap or /bal")
 
 def deposit(bot, update):
 	user = update.message.from_user.username
@@ -88,7 +88,7 @@ def balance(bot,update):
 		ltc_balance = balance * ltcPrice
 		ltc_balance = str(round(ltc_balance,3))
 		balance =  str(round(balance,3))
-		bot.send_message(chat_id=update.message.chat_id, text="@{0} your current balance is: {1} PHO ≈  ${2} or {3} LTC".format(user,balance,fiat_balance, ltc_balance))
+		bot.send_message(chat_id=update.message.chat_id, text="@{0} your current balance is: {1} PHO ≈ ${2} or {3} LTC".format(user,balance,fiat_balance, ltc_balance))
 
 def price(bot,update):
 	quote_page = requests.get('https://api.coinmarketcap.com/v2/ticker/175/?convert=ltc')
@@ -135,15 +135,22 @@ def marketcap(bot,update):
 	usdMarketCap = data['quotes']['USD']['market_cap']
 	bot.send_message(chat_id=update.message.chat_id, text="The current market cap of Photon is valued at {0} LTC and ${1} USD" .format(ltcMarketCap, usdMarketCap))
 
-
 def contribute(bot, update):
 	   bot.send_message(chat_id=update.message.chat_id, text='Thanks for your interest in contributing!\n\n'
                                                           'This project is run as a labour of love, but if you would like to help '
-                                                          'cover my almost nonexistent server costs or buy me a coffee feel free to tip the bot:\n\n'
+                                                          'feel free to tip the bot:\n\n'
                                                           '/tip @PhotonTipBot <amount> \n\n'
                                                           'or contribute directly to:\n\n'
                                                           '{0} \n\n'
                                                           'Thanks for using the Photon Tipbot!'.format(conf.contribution_address))
+
+def getBlockExplorerBalance(bot, update):
+	target = update.message.text[8:]
+	address = target[:35]
+	url = "https://chainz.cryptoid.info/pho/api.dws?q=getbalance&a={0}".format(address)
+	balance_result = requests.get(url)
+	balance = balance_result.text
+	bot.send_message(chat_id=update.message.chat_id, text="The current balance for the address {0} is {1} PHO" .format(address, balance))
 
 
 from telegram.ext import CommandHandler
@@ -181,5 +188,7 @@ dispatcher.add_handler(help_handler)
 contribute_handler = CommandHandler('contribute', contribute)
 dispatcher.add_handler(contribute_handler)
 
-updater.start_polling()
+block_balance_handler = CommandHandler('expbal', getBlockExplorerBalance)
+dispatcher.add_handler(block_balance_handler)
 
+updater.start_polling()
